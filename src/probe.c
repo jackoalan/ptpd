@@ -98,7 +98,7 @@ void probe(PtpClock *ptpClock)
   
   /* done */
   printf("\n");
-  ptpdShutdown();
+  //ptpdShutdown();
   
   exit(0);
 }

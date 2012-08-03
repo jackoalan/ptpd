@@ -47,6 +47,7 @@ static int oldestRecv, nextFreeRecv;
  * frequent changes it ignores invocations less than one second away from
  * the previous one.
  */
+/*
 static void syncSystemWithNIC(PtpClock *ptpClock)
 {
   struct E1000_TSYNC_COMPARETS_ARGU ts;
@@ -90,19 +91,21 @@ static void syncSystemWithNIC(PtpClock *ptpClock)
 
   if(ptpClock->port_state == PTP_MASTER)
   {
-    timeBothClock.nic_instead_of_system = TRUE;
+    timeBothClock.nic_instead_of_system = PTRUE;
     timeBothClock.runTimeOpts.time = TIME_NIC;
   }
   else
   {
-    timeBothClock.nic_instead_of_system = FALSE;
+    timeBothClock.nic_instead_of_system = PFALSE;
     timeBothClock.runTimeOpts.time = TIME_SYSTEM;
   }
   updateClock(&timeBothClock);
   DBGV("system time updated\n");
 }
+ */
 
-static Boolean selectNICTimeMode(Boolean sync, PtpClock *ptpClock)
+/*
+static ptpdBoolean selectNICTimeMode(ptpdBoolean sync, PtpClock *ptpClock)
 {
   DBGV("time stamp incoming %s packets\n", sync ? "Sync" : "Delay_Req");
 
@@ -115,12 +118,7 @@ static Boolean selectNICTimeMode(Boolean sync, PtpClock *ptpClock)
       ptpClock->netPath.eventSockIFR.ifr_data = (void *)&hwconfig;
       memset(&hwconfig, 0, sizeof(&hwconfig));
 
-      /*
-       * Configure for time stamping of incoming Sync or Delay_Req
-       * messages and for time stamping of all out-going event
-       * messages. Out-going messages will be bounced via the error
-       * queue of the event socket.
-       */
+
       hwconfig.tx_type = HWTSTAMP_TX_ON;
       hwconfig.rx_filter = sync ?
           HWTSTAMP_FILTER_PTP_V1_L4_SYNC :
@@ -129,28 +127,26 @@ static Boolean selectNICTimeMode(Boolean sync, PtpClock *ptpClock)
 
       if (ioctl(ptpClock->netPath.eventSock, SIOCSHWTSTAMP, &ptpClock->netPath.eventSockIFR) < 0) {
           if (errno == ERANGE) {
-              /* hardware time stamping not supported */
               PERROR("net_tstamp SIOCSHWTSTAMP: mode of operation not supported");
-              return FALSE;
+              return PFALSE;
           } else {
               PERROR("net_tstamp SIOCSHWTSTAMP: %s", strerror(errno));
-              return FALSE;
+              return PFALSE;
           }
       }
 
       if (setsockopt(ptpClock->netPath.eventSock, SOL_SOCKET, SO_TIMESTAMPING, &so_timestamping_flags, sizeof(so_timestamping_flags)) < 0) {
           PERROR("net_tstamp SO_TIMESTAMPING: %s", strerror(errno));
-          return FALSE;
+          return PFALSE;
       }
       break;
   }
   case TIME_SYSTEM_LINUX_SW: {
-      /* same as before, but without requiring support by the NIC */
       int so_timestamping_flags =
           SOF_TIMESTAMPING_TX_SOFTWARE|SOF_TIMESTAMPING_RX_SOFTWARE|SOF_TIMESTAMPING_SOFTWARE;
       if (setsockopt(ptpClock->netPath.eventSock, SOL_SOCKET, SO_TIMESTAMPING, &so_timestamping_flags, sizeof(so_timestamping_flags)) < 0) {
           PERROR("net_tstamp SO_TIMESTAMPING: %s", strerror(errno));
-          return FALSE;
+          return PFALSE;
       }
       break;
   }
@@ -158,25 +154,27 @@ static Boolean selectNICTimeMode(Boolean sync, PtpClock *ptpClock)
   case TIME_SYSTEM_LINUX_SW:
   case TIME_SYSTEM_LINUX_HW:
       PERROR("net_tstamp interface not supported");
-      return FALSE;
-#endif /* HAVE_LINUX_NET_TSTAMP_H */
+      return PFALSE;
+#endif 
   default:
       *(int *)&ptpClock->netPath.eventSockIFR.ifr_data = sync ? E1000_UDP_V1_SYNC : E1000_UDP_V1_DELAY;
       if(ioctl(ptpClock->netPath.eventSock, E1000_TSYNC_ENABLERX_IOCTL, &ptpClock->netPath.eventSockIFR) < 0) {
           ERROR("could not activate E1000 hardware receive time stamping on %s: %s\n",
                 ptpClock->netPath.eventSockIFR.ifr_name,
                 strerror(errno));
-          return FALSE;
+          return PFALSE;
       }
       break;
   }
 
-  return TRUE;
+  return PTRUE;
 }
+*/
 
-static Boolean initNICTime(Boolean sync, PtpClock *ptpClock)
+/*
+static ptpdBoolean initNICTime(ptpdBoolean sync, PtpClock *ptpClock)
 {
-  /** @todo also check success indicator in ifr_data */
+  // @todo also check success indicator in ifr_data 
   if (ioctl(ptpClock->netPath.eventSock, E1000_TSYNC_INIT_IOCTL, &ptpClock->netPath.eventSockIFR) < 0) {
     ERROR("could not activate E1000 hardware time stamping on %s: %s\n",
           ptpClock->netPath.eventSockIFR.ifr_name,
@@ -201,17 +199,18 @@ static Boolean initNICTime(Boolean sync, PtpClock *ptpClock)
     setTime(&timeTmp, ptpClock);
     DBGV("shift NIC time done\n");
 #endif
-    return TRUE;
+    return PTRUE;
   }
 
-  return FALSE;
+  return PFALSE;
 }
+*/
 
-Boolean initTime(PtpClock *ptpClock)
+ptpdBoolean initTime(PtpClock *ptpClock)
 {
   switch(ptpClock->runTimeOpts.time) {
   case TIME_SYSTEM:
-    return TRUE;
+    return PTRUE;
     break;
   case TIME_BOTH:
     /* prepare clock servo for controlling system time */
@@ -227,19 +226,19 @@ Boolean initTime(PtpClock *ptpClock)
     ptpClock->runTimeOpts.ap = DEFAULT_AP;
     ptpClock->runTimeOpts.ai = DEFAULT_AI;
 
-    return initNICTime(TRUE, ptpClock);
+    return PFALSE;
     break;
   case TIME_SYSTEM_LINUX_HW:
   case TIME_SYSTEM_LINUX_SW:
-    return selectNICTimeMode(TRUE, ptpClock);
+    return PFALSE;
     break;
   case TIME_NIC:
   case TIME_SYSTEM_ASSISTED:
-    return initNICTime(TRUE, ptpClock);
+    return PFALSE;
     break;
   default:
     ERROR("unsupported selection of time source\n");
-    return FALSE;
+    return PFALSE;
     break;
   }
 }
@@ -255,11 +254,12 @@ void getTime(TimeInternal *time, PtpClock *ptpClock)
     struct timeval tv;
 
     gettimeofday(&tv, 0);
-    time->seconds = tv.tv_sec;
+    time->seconds = (Integer32)tv.tv_sec;
     time->nanoseconds = tv.tv_usec*1000;
     break;
   }
   case TIME_BOTH:
+          /*
   case TIME_NIC: {
     struct E1000_TSYNC_SYSTIME_ARGU ts;
 
@@ -277,6 +277,7 @@ void getTime(TimeInternal *time, PtpClock *ptpClock)
     syncSystemWithNIC(ptpClock);
     break;
   }
+           */
   default:
     ERROR("unsupported selection of time source\n");
     break;
@@ -298,6 +299,7 @@ void setTime(TimeInternal *time, PtpClock *ptpClock)
     settimeofday(&tv, 0);
     break;
   }
+          /*
   case TIME_BOTH:
   case TIME_NIC: {
     struct E1000_TSYNC_SYSTIME_ARGU ts;
@@ -330,6 +332,7 @@ void setTime(TimeInternal *time, PtpClock *ptpClock)
     }
     break;
   }
+           */
   default:
     ERROR("unsupported selection of time source\n");
     break;
@@ -338,227 +341,18 @@ void setTime(TimeInternal *time, PtpClock *ptpClock)
 
 void adjTime(Integer32 adj, TimeInternal *offset, PtpClock *ptpClock)
 {
-  switch(ptpClock->runTimeOpts.time)
-  {
-  case TIME_SYSTEM_LINUX_HW:
-  case TIME_SYSTEM_LINUX_SW:
-  case TIME_SYSTEM_ASSISTED:
-  case TIME_SYSTEM: {
-    struct timex t;
-    static Boolean maxAdjValid;
-    static long maxAdj;
-    static long minTick, maxTick;
-    static long userHZ;
-    static long tickRes; /* USER_HZ * 1000 [ppb] */
-    long tickAdj;
-    long freqAdj;
-    int res;
 
-    if (!maxAdjValid) {
-        userHZ = sysconf(_SC_CLK_TCK);
-        t.modes = 0;
-        adjtimex(&t);
-        maxAdj = t.tolerance / ((1<<16)/1000);
-        tickRes = userHZ * 1000;
-        /* limits from the adjtimex command man page; could be determined via binary search */
-        minTick = (900000 - 1000000) / userHZ;
-        maxTick = (1100000 - 1000000) / userHZ;
-        maxAdjValid = TRUE;
-    }
-
-    /*
-     * The Linux man page for the adjtimex() system call does not
-     * describe limits for frequency. The more recent man page for
-     * the adjtimex command on RH5 does and says that
-     * -tolerance <= frequency <= tolerance
-     * which was confirmed by trying out values just outside that interval.
-     *
-     * Note that this contradicts the comments for struct timex which say
-     * that freq and tolerance have different units (scaled ppm vs ppm).
-     *
-     * We follow the actual implementation on Linux 2.6.22 and do the
-     * range check after scaling.
-     */
-
-    t.modes = MOD_FREQUENCY|MOD_CLKB;
-    /*
-     * @todo
-     * Where is the official documentation for "scaled  ppm"?
-     * Should this perhaps be adj * (1<<16) / 1000 (more accurate
-     * than multiplying by ((1<<16)/1000) == 65)?
-     */
-
-    /*
-     * 1 t.tick = 1 e-6 s * USER_HZ 1/s = 1 USER_HZ * 1000 ppb
-     *
-     * Large values of adj can be turned into t.tick adjustments:
-     * tickAdj t.tick = adj ppb / ( USER_HZ * 1000 ppb )
-     *
-     * Round this so that the error is as small is possible,
-     * because we need to fit that into t.freq.
-     */
-    freqAdj = adj;
-    tickAdj = 0;
-    if(freqAdj > maxAdj)
-    {
-      tickAdj = (adj - maxAdj + tickRes - 1) / tickRes;
-      if(tickAdj > maxTick)
-        tickAdj = maxTick;
-      freqAdj = adj - tickAdj * tickRes;
-    }
-    else if(freqAdj < -maxAdj)
-    {
-      tickAdj = -((-adj - maxAdj + tickRes - 1) / tickRes);
-      if(tickAdj < minTick)
-        tickAdj = minTick;
-      freqAdj = adj - tickAdj * tickRes;
-    }
-    if(freqAdj > maxAdj)
-      freqAdj = maxAdj;
-    else if(freqAdj < -maxAdj)
-      freqAdj = -maxAdj;
-
-    t.freq = freqAdj * ((1<<16)/1000);
-    t.tick = tickAdj + 1000000 / userHZ;
-    ptpClock->adj = tickAdj * tickRes + freqAdj;
-
-    INFO("requested adj %d ppb => adjust system frequency by %d scaled ppm (%d ppb) + %ld us/tick (%d ppb) = adj %d ppb (freq limit %ld/%ld ppm, tick limit %ld/%ld us*USER_HZ)\n",
-         adj,
-         t.freq, freqAdj,
-         t.tick - 1000000 / userHZ, tickAdj * tickRes,
-         ptpClock->adj,
-         -maxAdj, maxAdj,
-         minTick, maxTick);
-
-    res = adjtimex(&t);
-    switch (res) {
-    case -1:
-        ERROR("adjtimex(freq = %d) failed: %s\n",
-              t.freq, strerror(errno));
-        break;
-    case TIME_OK:
-        INFO("  -> TIME_OK\n");
-        break;
-    case TIME_INS:
-        ERROR("adjtimex -> insert leap second?!\n");
-        break;
-    case TIME_DEL:
-        ERROR("adjtimex -> delete leap second?!\n");
-        break;
-    case TIME_OOP:
-        ERROR("adjtimex -> leap second in progress?!\n");
-        break;
-    case TIME_WAIT:
-        ERROR("adjtimex -> leap second has occurred?!\n");
-        break;
-    case TIME_BAD:
-        ERROR("adjtimex -> time bad\n");
-        break;
-    default:
-        ERROR("adjtimex -> unknown result %d\n", res);
-        break;
-    }
-    break;
-  }
-  case TIME_BOTH:
-  case TIME_NIC: {
-    if(offset)
-    {
-#if 0
-      struct E1000_TSYNC_SYSTIME_ARGU ts;
-      memset(&ts, 0, sizeof(ts));
-      // always store positive seconds/nanoseconds
-      ts.negative_offset = (offset->seconds < 0 || offset->nanoseconds < 0) ? -1 : 1;
-      ts.time.seconds = ts.negative_offset * offset->seconds;
-      ts.time.nanoseconds = ts.negative_offset * offset->nanoseconds;
-      // invert the sign: if offset is positive, we need to substract it and vice versa
-      ts.negative_offset *= -1;
-      DBGV("adjust NIC time by offset %s%lu.%09d (adj %d)\n",
-           ts.negative_offset < 0 ? "-" : "",
-           ts.time.seconds, ts.time.nanoseconds,
-           adj);
-      ptpClock->netPath.eventSockIFR.ifr_data = (void *)&ts;
-      if (ioctl(ptpClock->netPath.eventSock, E1000_TSYNC_SYSTIME_IOCTL, &ptpClock->netPath.eventSockIFR) < 0) {
-        ERROR("could not modify E1000 hardware time on %s: %s\n",
-              ptpClock->netPath.eventSockIFR.ifr_name,
-              strerror(errno));
-      }
-      else
-        syncSystemWithNIC(ptpClock);
-#else
-      // adjust NIC frequency
-      struct E1000_TSYNC_ADJTIME_ARGU ts;
-      memset(&ts, 0, sizeof(ts));
-      ts.adj = (long long)adj;
-      if(ptpClock->nic_instead_of_system)
-        ts.adj = -ts.adj;
-      ts.set_adj = TRUE;
-      ptpClock->netPath.eventSockIFR.ifr_data = (void *)&ts;
-      DBGV("adjust NIC frequency by %d ppb\n", ts.adj);
-      ptpClock->adj = ts.adj;
-      if (ioctl(ptpClock->netPath.eventSock, E1000_TSYNC_ADJTIME_IOCTL, &ptpClock->netPath.eventSockIFR) < 0) {
-        ERROR("could not modify E1000 hardware frequency on %s: %s\n",
-              ptpClock->netPath.eventSockIFR.ifr_name,
-              strerror(errno));
-      }
-      else
-        syncSystemWithNIC(ptpClock);
-#endif
-    }
-    else
-      syncSystemWithNIC(ptpClock);
-    break;
-  }
-  default:
-    ERROR("unsupported selection of time source\n");
-    break;
-  }
 }
 
 void adjTimeOffset(TimeInternal *offset, PtpClock *ptpClock)
 {
-  switch(ptpClock->runTimeOpts.time)
-  {
-  case TIME_BOTH:
-  case TIME_NIC: {
-    struct E1000_TSYNC_SYSTIME_ARGU ts;
-    memset(&ts, 0, sizeof(ts));
-    // always store positive seconds/nanoseconds
-    ts.negative_offset = (offset->seconds < 0 || offset->nanoseconds < 0) ? -1 : 1;
-    ts.time.seconds = ts.negative_offset * offset->seconds;
-    ts.time.nanoseconds = ts.negative_offset * offset->nanoseconds;
 
-    // invert the sign: if offset is positive, we need to substract it and vice versa;
-    // when in nic_instead_of_system the logic is already inverted
-    if (!ptpClock->nic_instead_of_system)
-      ts.negative_offset *= -1;
-
-    DBGV("adjust NIC time by offset %s%lu.%09d\n",
-         ts.negative_offset < 0 ? "-" : "",
-         ts.time.seconds, ts.time.nanoseconds);
-    ptpClock->netPath.eventSockIFR.ifr_data = (void *)&ts;
-    if (ioctl(ptpClock->netPath.eventSock, E1000_TSYNC_SYSTIME_IOCTL, &ptpClock->netPath.eventSockIFR) < 0) {
-        ERROR("could not modify E1000 hardware time on %s: %s\n",
-              ptpClock->netPath.eventSockIFR.ifr_name,
-              strerror(errno));
-    }
-    else
-      syncSystemWithNIC(ptpClock);
-    break;
-  }
-  default: {
-    TimeInternal timeTmp;
-
-    getTime(&timeTmp, ptpClock);
-    subTime(&timeTmp, &timeTmp, offset);
-    setTime(&timeTmp, ptpClock);
-  }
-  }
 }
 
 static void getTimeStamps(PtpClock *ptpClock)
 {
-  struct E1000_TSYNC_READTS_ARGU ts;
+  /*
+    struct E1000_TSYNC_READTS_ARGU ts;
 
   ptpClock->netPath.eventSockIFR.ifr_data = (void *)&ts;
   memset(&ts, 0, sizeof(ts));
@@ -628,9 +422,10 @@ static void getTimeStamps(PtpClock *ptpClock)
          ts.withSystemTime ? ts.tx.seconds : 0,
          ts.withSystemTime ? ts.tx.nanoseconds : 0);
   }
+   */
 }
 
-Boolean getSendTime(TimeInternal *sendTimeStamp,
+ptpdBoolean getSendTime(TimeInternal *sendTimeStamp,
                     PtpClock *ptpClock)
 {
   /* check for new time stamps */
@@ -641,17 +436,17 @@ Boolean getSendTime(TimeInternal *sendTimeStamp,
     *sendTimeStamp = lastSendTime;
     lastSendTime.seconds = 0;
     lastSendTime.nanoseconds = 0;
-    return TRUE;
+    return PTRUE;
   }
   else
-    return FALSE;
+    return PFALSE;
 }
 
 /**
  * helper function for getReceiveTime() which searches for time stamp
  * in lastRecvTimes[leftIndex, rightIndex[
  */
-static Boolean getReceiveTimeFromArray(TimeInternal *recvTimeStamp,
+static ptpdBoolean getReceiveTimeFromArray(TimeInternal *recvTimeStamp,
                                        Octet sourceUuid[PTP_UUID_LENGTH],
                                        UInteger16 sequenceId,
                                        int leftIndex, int rightIndex)
@@ -678,13 +473,13 @@ static Boolean getReceiveTimeFromArray(TimeInternal *recvTimeStamp,
       // invalidate entry to prevent accidental reuse (happened when slaves were
       // restarted quickly while the master still had their old sequence IDs in the array)
       memset(&lastRecvTimes[i], 0, sizeof(lastRecvTimes[i]));
-      return TRUE;
+      return PTRUE;
     }
   }
-  return FALSE;
+  return PFALSE;
 }
 
-Boolean getReceiveTime(TimeInternal *recvTimeStamp,
+ptpdBoolean getReceiveTime(TimeInternal *recvTimeStamp,
                        Octet sourceUuid[PTP_UUID_LENGTH],
                        UInteger16 sequenceId,
                        PtpClock *ptpClock)
@@ -697,7 +492,7 @@ Boolean getReceiveTime(TimeInternal *recvTimeStamp,
   else
   {
     if(getReceiveTimeFromArray(recvTimeStamp, sourceUuid, sequenceId, oldestRecv, RECV_ARRAY_SIZE))
-      return TRUE;
+      return PTRUE;
     else
       return getReceiveTimeFromArray(recvTimeStamp, sourceUuid, sequenceId, 0, nextFreeRecv);
   }
@@ -751,7 +546,7 @@ void timeNoActivity(PtpClock *ptpClock)
   }
   }
 #endif
-  syncSystemWithNIC(ptpClock);
+  //syncSystemWithNIC(ptpClock);
 }
 
 void timeToState(UInteger8 state, PtpClock *ptpClock)
@@ -759,12 +554,7 @@ void timeToState(UInteger8 state, PtpClock *ptpClock)
   if(ptpClock->runTimeOpts.time > TIME_SYSTEM &&
      state != ptpClock->port_state)
   {
-    if(state == PTP_MASTER)
-      /* only master listens for Delay_Req... */
-      selectNICTimeMode(FALSE, ptpClock);
-    else if(ptpClock->port_state == PTP_MASTER)
-      /** ... and only while he still is master */
-      selectNICTimeMode(TRUE, ptpClock);
+
 
     timeBothClock.port_state = state;
   }

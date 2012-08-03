@@ -3,7 +3,7 @@
 #include "../ptpd.h"
 #include <stdarg.h>
 
-Boolean useSyslog;
+ptpdBoolean useSyslog;
 
 void message(int priority, const char *format, ...)
 {
@@ -12,11 +12,11 @@ void message(int priority, const char *format, ...)
   va_start(ap, format);
   if (useSyslog)
   {
-    static Boolean logOpened;
+    static ptpdBoolean logOpened;
     if (!logOpened)
     {
       openlog("ptpd", 0, LOG_USER);
-      logOpened = TRUE;
+      logOpened = PTRUE;
     }
     vsyslog(priority, format, ap);
   }

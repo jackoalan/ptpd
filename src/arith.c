@@ -41,7 +41,7 @@ UInteger32 sum(Octet *buf, Integer16 length)
   return sum;
 }
 
-void fromInternalTime(TimeInternal *internal, TimeRepresentation *external, Boolean halfEpoch)
+void fromInternalTime(TimeInternal *internal, TimeRepresentation *external, ptpdBoolean halfEpoch)
 {
   external->seconds = labs(internal->seconds) + halfEpoch * INT_MAX;
   
@@ -59,7 +59,7 @@ void fromInternalTime(TimeInternal *internal, TimeRepresentation *external, Bool
     external->seconds, external->nanoseconds);
 }
 
-void toInternalTime(TimeInternal *internal, TimeRepresentation *external, Boolean *halfEpoch)
+void toInternalTime(TimeInternal *internal, TimeRepresentation *external, ptpdBoolean *halfEpoch)
 {
   *halfEpoch = external->seconds / INT_MAX;
   

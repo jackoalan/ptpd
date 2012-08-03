@@ -106,7 +106,7 @@ PtpClock * ptpdStartup(int argc, char **argv, Integer16 *ret, RunTimeOpts *rtOpt
     case 'f':
       if(!strcmp(optarg, "syslog"))
       {
-        useSyslog = TRUE;
+        useSyslog = PTRUE;
       }
       else
       {
@@ -123,13 +123,13 @@ PtpClock * ptpdStartup(int argc, char **argv, Integer16 *ret, RunTimeOpts *rtOpt
       
     case 'd':
 #ifndef PTPD_DBG
-      rtOpts->displayStats = TRUE;
+      rtOpts->displayStats = PTRUE;
 #endif
       break;
       
     case 'D':
-      rtOpts->displayStats = TRUE;
-      rtOpts->csvStats = TRUE;
+      rtOpts->displayStats = PTRUE;
+      rtOpts->csvStats = PTRUE;
       break;
       
     case 'z':
@@ -165,11 +165,11 @@ PtpClock * ptpdStartup(int argc, char **argv, Integer16 *ret, RunTimeOpts *rtOpt
       break;
 
     case 'x':
-      rtOpts->noResetClock = TRUE;
+      rtOpts->noResetClock = PTRUE;
       break;
       
     case 't':
-      rtOpts->noAdjust = TRUE;
+      rtOpts->noAdjust = PTRUE;
       break;
       
     case 'a':
@@ -206,7 +206,7 @@ PtpClock * ptpdStartup(int argc, char **argv, Integer16 *ret, RunTimeOpts *rtOpt
       break;
       
     case 'h':
-      rtOpts->halfEpoch = TRUE;
+      rtOpts->halfEpoch = PTRUE;
       break;
       
     case 'y':
@@ -220,11 +220,11 @@ PtpClock * ptpdStartup(int argc, char **argv, Integer16 *ret, RunTimeOpts *rtOpt
       break;
       
     case 'g':
-      rtOpts->slaveOnly = TRUE;
+      rtOpts->slaveOnly = PTRUE;
       break;
       
     case 'p':
-      rtOpts->clockPreferred = TRUE;
+      rtOpts->clockPreferred = PTRUE;
       break;
       
     case 's':
@@ -248,7 +248,7 @@ PtpClock * ptpdStartup(int argc, char **argv, Integer16 *ret, RunTimeOpts *rtOpt
       break;
       
     case 'k':
-      rtOpts->probe = TRUE;
+      rtOpts->probe = PTRUE;
       
       rtOpts->probe_management_key = strtol(optarg, &optarg, 0);
       if(optarg[0])

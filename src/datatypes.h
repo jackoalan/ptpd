@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
   Integer32  interval;
   Integer32  left;
-  Boolean expire;
+  ptpdBoolean expire;
 } IntervalTimer;
 
 /* Message header */
@@ -46,8 +46,8 @@ typedef struct {
   UInteger8  grandmasterClockStratum;
   Octet  grandmasterClockIdentifier[PTP_CODE_STRING_LENGTH];
   Integer16  grandmasterClockVariance;
-  Boolean  grandmasterPreferred;
-  Boolean  grandmasterIsBoundaryClock;
+  ptpdBoolean  grandmasterPreferred;
+  ptpdBoolean  grandmasterIsBoundaryClock;
   Integer8  syncInterval;
   Integer16  localClockVariance;
   UInteger16  localStepsRemoved;
@@ -58,7 +58,7 @@ typedef struct {
   UInteger16  parentPortField;
   Integer16  estimatedMasterVariance;
   Integer32  estimatedMasterDrift;
-  Boolean  utcReasonable;
+  ptpdBoolean  utcReasonable;
   
 } MsgSync;
 
@@ -100,11 +100,11 @@ typedef union
     UInteger8  clockStratum;
     Octet  clockIdentifier[PTP_CODE_STRING_LENGTH];
     Integer16  clockVariance;
-    Boolean  clockFollowupCapable;
-    Boolean  preferred;
-    Boolean  initializable;
-    Boolean  externalTiming;
-    Boolean  isBoundaryClock;
+    ptpdBoolean  clockFollowupCapable;
+    ptpdBoolean  preferred;
+    ptpdBoolean  initializable;
+    ptpdBoolean  externalTiming;
+    ptpdBoolean  isBoundaryClock;
     Integer8  syncInterval;
     Octet  subdomainName[PTP_SUBDOMAIN_NAME_LENGTH];
     UInteger16  numberPorts;
@@ -124,21 +124,21 @@ typedef union
     Octet  parentUuid[PTP_UUID_LENGTH];
     UInteger16  parentPortId;
     UInteger16  parentLastSyncSequenceNumber;
-    Boolean  parentFollowupCapable;
-    Boolean  parentExternalTiming;
+    ptpdBoolean  parentFollowupCapable;
+    ptpdBoolean  parentExternalTiming;
     Integer16  parentVariance;
-    Boolean  parentStats;
+    ptpdBoolean  parentStats;
     Integer16  observedVariance;
     Integer32  observedDrift;
-    Boolean  utcReasonable;
+    ptpdBoolean  utcReasonable;
     UInteger8  grandmasterCommunicationTechnology;
     Octet  grandmasterUuidField[PTP_UUID_LENGTH];
     UInteger16  grandmasterPortIdField;
     UInteger8  grandmasterStratum;
     Octet  grandmasterIdentifier[PTP_CODE_STRING_LENGTH];
     Integer16  grandmasterVariance;
-    Boolean  grandmasterPreferred;
-    Boolean  grandmasterIsBoundaryClock;
+    ptpdBoolean  grandmasterPreferred;
+    ptpdBoolean  grandmasterIsBoundaryClock;
     UInteger16  grandmasterSequenceNumber;
   } parent;
   
@@ -151,7 +151,7 @@ typedef union
     UInteger8  portCommunicationTechnology;
     Octet  portUuidField[PTP_UUID_LENGTH];
     UInteger16  portIdField;
-    Boolean  burstEnabled;
+    ptpdBoolean  burstEnabled;
     UInteger8  subdomainAddressOctets;
     UInteger8  eventPortAddressOctets;
     UInteger8  generalPortAddressOctets;
@@ -164,8 +164,8 @@ typedef union
   {
     TimeRepresentation  localTime;
     Integer16  currentUtcOffset;
-    Boolean  leap59;
-    Boolean  leap61;
+    ptpdBoolean  leap59;
+    ptpdBoolean  leap61;
     UInteger16  epochNumber;
   } globalTime;
   
@@ -257,24 +257,24 @@ typedef struct {
   Octet  clockIdentifier[PTP_CODE_STRING_LENGTH];
   UInteger32  clockVariance;
   UInteger8  clockStratum;
-  Boolean  clockPreferred;
+  ptpdBoolean  clockPreferred;
   Integer16  currentUtcOffset;
   UInteger16  epochNumber;
   Octet  ifaceName[IFACE_NAME_LENGTH];
-  Boolean  noResetClock;
-  Boolean  noAdjust;
-  Boolean  displayStats;
-  Boolean  csvStats;
+  ptpdBoolean  noResetClock;
+  ptpdBoolean  noAdjust;
+  ptpdBoolean  displayStats;
+  ptpdBoolean  csvStats;
   Octet  unicastAddress[NET_ADDRESS_LENGTH];
   Integer16  ap, ai;
   Integer16  s;
   TimeInternal  inboundLatency, outboundLatency;
   Integer16  max_foreign_records;
-  Boolean  slaveOnly;
-  Boolean  probe;
+  ptpdBoolean  slaveOnly;
+  ptpdBoolean  probe;
   UInteger8  probe_management_key;
   UInteger16  probe_record_key;
-  Boolean  halfEpoch;
+  ptpdBoolean  halfEpoch;
   Time time;
 } RunTimeOpts;
 
@@ -290,11 +290,11 @@ typedef struct {
   UInteger8  clock_stratum;
   Octet  clock_identifier[PTP_CODE_STRING_LENGTH];
   Integer16  clock_variance;
-  Boolean  clock_followup_capable;
-  Boolean  preferred;
-  Boolean  initializable;
-  Boolean  external_timing;
-  Boolean  is_boundary_clock;
+  ptpdBoolean  clock_followup_capable;
+  ptpdBoolean  preferred;
+  ptpdBoolean  initializable;
+  ptpdBoolean  external_timing;
+  ptpdBoolean  is_boundary_clock;
   Integer8  sync_interval;
   Octet  subdomain_name[PTP_SUBDOMAIN_NAME_LENGTH];
   UInteger16  number_ports;
@@ -310,28 +310,28 @@ typedef struct {
   Octet  parent_uuid[PTP_UUID_LENGTH];
   UInteger16  parent_port_id;
   UInteger16  parent_last_sync_sequence_number;
-  Boolean  parent_followup_capable;
-  Boolean  parent_external_timing;
+  ptpdBoolean  parent_followup_capable;
+  ptpdBoolean  parent_external_timing;
   Integer16  parent_variance;
-  Boolean  parent_stats;
+  ptpdBoolean  parent_stats;
   Integer16  observed_variance;
   Integer32  observed_drift;
   long       adj;
-  Boolean  utc_reasonable;
+  ptpdBoolean  utc_reasonable;
   UInteger8  grandmaster_communication_technology;
   Octet  grandmaster_uuid_field[PTP_UUID_LENGTH];
   UInteger16  grandmaster_port_id_field;
   UInteger8  grandmaster_stratum;
   Octet  grandmaster_identifier[PTP_CODE_STRING_LENGTH];
   Integer16  grandmaster_variance;
-  Boolean  grandmaster_preferred;
-  Boolean  grandmaster_is_boundary_clock;
+  ptpdBoolean  grandmaster_preferred;
+  ptpdBoolean  grandmaster_is_boundary_clock;
   UInteger16  grandmaster_sequence_number;
   
   /* Global time properties data set */
   Integer16  current_utc_offset;
-  Boolean  leap_59;
-  Boolean  leap_61;
+  ptpdBoolean  leap_59;
+  ptpdBoolean  leap_61;
   UInteger16  epoch_number;
   
   /* Port configuration data set */
@@ -344,18 +344,18 @@ typedef struct {
   UInteger8  port_communication_technology;
   Octet  port_uuid_field[PTP_UUID_LENGTH];
   UInteger16  port_id_field;
-  Boolean  burst_enabled;
+  ptpdBoolean  burst_enabled;
   
   /* Foreign master data set */
   ForeignMasterRecord *foreign;
   
   /* Other things we need for the protocol */
-  Boolean halfEpoch;
+  ptpdBoolean halfEpoch;
   
   Integer16  max_foreign_records;
   Integer16  foreign_record_i;
   Integer16  foreign_record_best;
-  Boolean  record_update;
+  ptpdBoolean  record_update;
   UInteger32 random_seed;
   
   MsgHeader msgTmpHeader;
@@ -389,14 +389,14 @@ typedef struct {
    * clock adjustment and control NIC time instead. This way
    * the master's system time is propagated to slaves.
    */
-  Boolean nic_instead_of_system;
+  ptpdBoolean nic_instead_of_system;
 
   /**
    * TRUE if outgoing packets are not to be time-stamped in advance.
    * Instead the outgoing time stamp is generated as it is transmitted
    * and must be sent in a follow-up message.
    */
-  Boolean delayedTiming;
+  ptpdBoolean delayedTiming;
 
   /**
    * a prefix to be inserted before messages about the clock:
@@ -406,14 +406,14 @@ typedef struct {
    */
   const char *name;
 
-  Boolean  sentDelayReq;
+  ptpdBoolean  sentDelayReq;
   UInteger16  sentDelayReqSequenceId;
-  Boolean  waitingForFollow;
+  ptpdBoolean  waitingForFollow;
   
   offset_from_master_filter  ofm_filt;
   one_way_delay_filter  owd_filt;
   
-  Boolean message_activity;
+  ptpdBoolean message_activity;
   
   IntervalTimer  itimer[TIMER_ARRAY_SIZE];
   

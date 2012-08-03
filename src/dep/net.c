@@ -2,7 +2,7 @@
 
 #include "../ptpd.h"
 
-Boolean lookupSubdomainAddress(Octet *subdomainName, Octet *subdomainAddress)
+ptpdBoolean lookupSubdomainAddress(Octet *subdomainName, Octet *subdomainAddress)
 {
   UInteger32 h;
   
@@ -31,11 +31,11 @@ Boolean lookupSubdomainAddress(Octet *subdomainName, Octet *subdomainAddress)
       break;
     default:
       ERROR("handle out of range for '%s'!\n", subdomainName);
-      return FALSE;
+      return PFALSE;
     }
   }
   
-  return TRUE;
+  return PTRUE;
 }
 
 UInteger8 lookupCommunicationTechnology(UInteger8 communicationTechnology)
@@ -150,7 +150,7 @@ UInteger32 findIface(Octet *ifaceName, UInteger8 *communicationTechnology,
   if (getifaddrs(&if_list) < 0)
   {
     PERROR("getifaddrs() failed");
-    return FALSE;
+    return PFALSE;
   }
 
   /* find an IPv4, multicast, UP interface, right name(if supplied) */
@@ -178,10 +178,10 @@ UInteger32 findIface(Octet *ifaceName, UInteger8 *communicationTechnology,
     if (ifaceName[0])
     {
       ERROR("interface \"%s\" does not exist, or is not appropriate\n", ifaceName);
-      return FALSE;
+      return PFALSE;
     }
     ERROR("no suitable interfaces found!");
-    return FALSE;
+    return PFALSE;
   }
 
   /* find the AF_LINK info associated with the chosen interface */
@@ -196,14 +196,14 @@ UInteger32 findIface(Octet *ifaceName, UInteger8 *communicationTechnology,
   if (ifh == NULL)
   {
     ERROR("could not get hardware address for interface \"%s\"\n", ifv4->ifa_name);
-    return FALSE;
+    return PFALSE;
   }
 
   /* check that the interface TYPE is OK */
   if ( ((struct sockaddr_dl *)ifh->ifa_addr)->sdl_type != IFT_ETHER )
   {
     ERROR("\"%s\" is not an ethernet interface!\n", ifh->ifa_name);
-    return FALSE;
+    return PFALSE;
   }
 
   DBG("==> %s %s %s\n", ifv4->ifa_name,
@@ -224,7 +224,7 @@ UInteger32 findIface(Octet *ifaceName, UInteger8 *communicationTechnology,
 /* must specify 'subdomainName', optionally 'ifaceName', if not then pass ifaceName == "" */
 /* returns other args */
 /* on socket options, see the 'socket(7)' and 'ip' man pages */
-Boolean netInit(PtpClock *ptpClock)
+ptpdBoolean netInit(PtpClock *ptpClock)
 {
   int temp, i;
   struct in_addr interfaceAddr, netAddr;
@@ -232,7 +232,7 @@ Boolean netInit(PtpClock *ptpClock)
   struct ip_mreq imr;
   char addrStr[NET_ADDRESS_LENGTH];
   char *s;
-  Boolean useSystemTimeStamps = ptpClock->runTimeOpts.time == TIME_SYSTEM;
+  ptpdBoolean useSystemTimeStamps = ptpClock->runTimeOpts.time == TIME_SYSTEM;
   
   DBG("netInit\n");
   
@@ -241,13 +241,13 @@ Boolean netInit(PtpClock *ptpClock)
     || (ptpClock->netPath.generalSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP) ) < 0 )
   {
     PERROR("failed to initalize sockets");
-    return FALSE;
+    return PFALSE;
   }
 
   /* find a network interface */
   if( !(interfaceAddr.s_addr = findIface(ptpClock->runTimeOpts.ifaceName, &ptpClock->port_communication_technology,
     ptpClock->port_uuid_field, ptpClock)) )
-    return FALSE;
+    return PFALSE;
   
   temp = 1;  /* allow address reuse */
   if( setsockopt(ptpClock->netPath.eventSock, SOL_SOCKET, SO_REUSEADDR, &temp, sizeof(int)) < 0
@@ -264,14 +264,14 @@ Boolean netInit(PtpClock *ptpClock)
   if(bind(ptpClock->netPath.eventSock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) < 0)
   {
     PERROR("failed to bind event socket");
-    return FALSE;
+    return PFALSE;
   }
   
   addr.sin_port = htons(PTP_GENERAL_PORT);
   if(bind(ptpClock->netPath.generalSock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) < 0)
   {
     PERROR("failed to bind general socket");
-    return FALSE;
+    return PFALSE;
   }
   
   /* set general and port address */
@@ -284,7 +284,7 @@ Boolean netInit(PtpClock *ptpClock)
     if(!inet_aton(ptpClock->runTimeOpts.unicastAddress, &netAddr))
     {
       ERROR("failed to encode uni-cast address: %s\n", ptpClock->runTimeOpts.unicastAddress);
-      return FALSE;
+      return PFALSE;
     }
     
     ptpClock->netPath.unicastAddr = netAddr.s_addr;
@@ -294,12 +294,12 @@ Boolean netInit(PtpClock *ptpClock)
   
   /* resolve PTP subdomain */
   if(!lookupSubdomainAddress(ptpClock->runTimeOpts.subdomainName, addrStr))
-    return FALSE;
+    return PFALSE;
   
   if(!inet_aton(addrStr, &netAddr))
   {
     ERROR("failed to encode multi-cast address: %s\n", addrStr);
-    return FALSE;
+    return PFALSE;
   }
   
   ptpClock->netPath.multicastAddr = netAddr.s_addr;
@@ -322,7 +322,7 @@ Boolean netInit(PtpClock *ptpClock)
     || setsockopt(ptpClock->netPath.generalSock, IPPROTO_IP, IP_MULTICAST_IF, &imr.imr_interface.s_addr, sizeof(struct in_addr)) < 0 )
   {
     PERROR("failed to enable multi-cast on the interface");
-    return FALSE;
+    return PFALSE;
   }
   
   /* join multicast group (for receiving) on specified interface */
@@ -330,7 +330,7 @@ Boolean netInit(PtpClock *ptpClock)
     || setsockopt(ptpClock->netPath.generalSock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr, sizeof(struct ip_mreq)) < 0 )
   {
     PERROR("failed to join the multi-cast group");
-    return FALSE;
+    return PFALSE;
   }
 
   /* set socket time-to-live to 1 */
@@ -339,7 +339,7 @@ Boolean netInit(PtpClock *ptpClock)
     || setsockopt(ptpClock->netPath.generalSock, IPPROTO_IP, IP_MULTICAST_TTL, &temp, sizeof(int)) < 0 )
   {
     PERROR("failed to set the multi-cast time-to-live");
-    return FALSE;
+    return PFALSE;
   }
   
   /* set loopback: needed only for time stamping with the system clock */
@@ -348,7 +348,7 @@ Boolean netInit(PtpClock *ptpClock)
     || setsockopt(ptpClock->netPath.generalSock, IPPROTO_IP, IP_MULTICAST_LOOP, &temp, sizeof(int)) < 0 )
   {
     PERROR("failed to enable multi-cast loopback");
-    return FALSE;
+    return PFALSE;
   }
 
   /* make timestamps available through recvmsg() (only needed for time stamping with system clock) */
@@ -357,14 +357,14 @@ Boolean netInit(PtpClock *ptpClock)
     || setsockopt(ptpClock->netPath.generalSock, SOL_SOCKET, SO_TIMESTAMP, &temp, sizeof(int)) < 0 )
   {
     PERROR("failed to enable receive time stamps");
-    return FALSE;
+    return PFALSE;
   }
 
-  return TRUE;
+  return PTRUE;
 }
 
 /* shut down the UDP stuff */
-Boolean netShutdown(PtpClock *ptpClock)
+ptpdBoolean netShutdown(PtpClock *ptpClock)
 {
   struct ip_mreq imr;
 
@@ -401,7 +401,7 @@ Boolean netShutdown(PtpClock *ptpClock)
     close(ptpClock->netPath.generalSock);
   ptpClock->netPath.generalSock = -1;
     
-  return TRUE;
+  return PTRUE;
 }
 
 int netSelect(TimeInternal *timeout, PtpClock *ptpClock)
@@ -411,7 +411,7 @@ int netSelect(TimeInternal *timeout, PtpClock *ptpClock)
   struct timeval tv, *tv_ptr;
   
   if(timeout < 0)
-    return FALSE;
+    return PFALSE;
   
   FD_ZERO(&readfds);
   FD_SET(ptpClock->netPath.eventSock, &readfds);
@@ -452,7 +452,7 @@ ssize_t netRecvEvent(Octet *buf, TimeInternal *time, PtpClock *ptpClock)
       char control[512];
   } cmsg_un;
   struct cmsghdr *cmsg;
-  Boolean have_time;
+  ptpdBoolean have_time;
   
   vec[0].iov_base = buf;
   vec[0].iov_len = PACKET_SIZE;
@@ -526,7 +526,7 @@ ssize_t netRecvEvent(Octet *buf, TimeInternal *time, PtpClock *ptpClock)
     return 0;
   }
   
-  for (cmsg = CMSG_FIRSTHDR(&msg), have_time = FALSE;
+  for (cmsg = CMSG_FIRSTHDR(&msg), have_time = PFALSE;
        !have_time && cmsg != NULL;
        cmsg = CMSG_NXTHDR(&msg, cmsg))
   {
@@ -542,7 +542,7 @@ ssize_t netRecvEvent(Octet *buf, TimeInternal *time, PtpClock *ptpClock)
           }
           time->seconds = tv->tv_sec;
           time->nanoseconds = tv->tv_usec*1000;
-          have_time = TRUE;
+          have_time = PTRUE;
           break;
       }
 #ifdef HAVE_LINUX_NET_TSTAMP_H
@@ -563,7 +563,7 @@ ssize_t netRecvEvent(Octet *buf, TimeInternal *time, PtpClock *ptpClock)
           if (stamp->tv_sec && stamp->tv_nsec) {
               time->seconds = stamp->tv_sec;
               time->nanoseconds = stamp->tv_nsec;
-              have_time = TRUE;
+              have_time = PTRUE;
           }
           break;
       }
@@ -654,8 +654,8 @@ ssize_t netSendEvent(Octet *buf, UInteger16 length, TimeInternal *sendTimeStamp,
          */
       TimeInternal start, now;
       timerNow(&start);
-      while(TRUE) {
-        Boolean gotTime;
+      while(PTRUE) {
+        ptpdBoolean gotTime;
         TimeInternal delayAfterPacketSend;
         delayAfterPacketSend.seconds = 0;
         delayAfterPacketSend.nanoseconds = 1000;

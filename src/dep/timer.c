@@ -49,7 +49,7 @@ void timerUpdate(IntervalTimer *itimer)
     if(itimer[i].interval > 0 && (itimer[i].left -= delta) <= 0)
     {
       itimer[i].left = itimer[i].interval;
-      itimer[i].expire = TRUE;
+      itimer[i].expire = PTRUE;
       DBGV("timerUpdate: timer %u expired\n", i);
     }
   }
@@ -68,29 +68,29 @@ void timerStart(UInteger16 index, UInteger16 interval, IntervalTimer *itimer)
   if(index >= TIMER_ARRAY_SIZE)
     return;
   
-  itimer[index].expire = FALSE;
+  itimer[index].expire = PFALSE;
   itimer[index].left = interval;
   itimer[index].interval = itimer[index].left;
   
   DBGV("timerStart: set timer %d to %d\n", index, interval);
 }
 
-Boolean timerExpired(UInteger16 index, IntervalTimer *itimer)
+ptpdBoolean timerExpired(UInteger16 index, IntervalTimer *itimer)
 {
   timerUpdate(itimer);
   
   if(index >= TIMER_ARRAY_SIZE)
-    return FALSE;
+    return PFALSE;
   
   if(!itimer[index].expire)
-    return FALSE;
+    return PFALSE;
   
-  itimer[index].expire = FALSE;
+  itimer[index].expire = PFALSE;
   
-  return TRUE;
+  return PTRUE;
 }
 
-Boolean nanoSleep(TimeInternal *t)
+ptpdBoolean nanoSleep(TimeInternal *t)
 {
   struct timespec ts, tr;
 
@@ -101,10 +101,10 @@ Boolean nanoSleep(TimeInternal *t)
   {
     t->seconds = tr.tv_sec;
     t->nanoseconds = tr.tv_nsec;
-    return FALSE;
+    return PFALSE;
   }
 
-  return TRUE;
+  return PTRUE;
 }
 
 void timerNow(TimeInternal *time)

@@ -54,7 +54,7 @@ void message(int priority, const char *format, ...);
  * if TRUE then message() will print via syslog(); no init required and
  * can be reverted to FALSE at any time
  */
-extern Boolean useSyslog;
+extern ptpdBoolean useSyslog;
 
 /* system messages */
 #define ERROR(x, ...)  message(LOG_ERR, x, ##__VA_ARGS__)
@@ -115,7 +115,7 @@ static inline Integer32 flip32(x)
 
 
 /* msg.c */
-Boolean msgPeek(void*,ssize_t);
+ptpdBoolean msgPeek(void*,ssize_t);
 void msgUnpackHeader(void*,MsgHeader*);
 void msgUnpackSync(void*,MsgSync*);
 void msgUnpackDelayReq(void*,MsgDelayReq*);
@@ -125,8 +125,8 @@ void msgUnpackManagement(void*,MsgManagement*);
 UInteger8 msgUnloadManagement(void*,MsgManagement*,PtpClock*);
 void msgUnpackManagementPayload(void *buf, MsgManagement *manage);
 void msgPackHeader(void*,PtpClock*);
-void msgPackSync(void*,Boolean,Boolean,TimeRepresentation*,PtpClock*);
-void msgPackDelayReq(void*,Boolean,Boolean,TimeRepresentation*,PtpClock*);
+void msgPackSync(void*,ptpdBoolean,ptpdBoolean,TimeRepresentation*,PtpClock*);
+void msgPackDelayReq(void*,ptpdBoolean,ptpdBoolean,TimeRepresentation*,PtpClock*);
 void msgPackFollowUp(void*,UInteger16,TimeRepresentation*,PtpClock*);
 void msgPackDelayResp(void*,MsgHeader*,TimeRepresentation*,PtpClock*);
 UInteger16 msgPackManagement(void*,MsgManagement*,PtpClock*);
@@ -134,8 +134,8 @@ UInteger16 msgPackManagementResponse(void*,MsgHeader*,MsgManagement*,PtpClock*);
 
 /* net.c */
 /* linux API dependent */
-Boolean netInit(PtpClock*);
-Boolean netShutdown(PtpClock*);
+ptpdBoolean netInit(PtpClock*);
+ptpdBoolean netShutdown(PtpClock*);
 int netSelect(TimeInternal*,PtpClock*);
 ssize_t netRecvEvent(Octet*,TimeInternal*,PtpClock*);
 ssize_t netRecvGeneral(Octet*,PtpClock*);
@@ -174,7 +174,7 @@ UInteger16 getRand(UInteger32*);
  */
 /*@{*/
 /** @file time.c */
-Boolean initTime(PtpClock*);
+ptpdBoolean initTime(PtpClock*);
 void getTime(TimeInternal*, PtpClock*);
 void setTime(TimeInternal*, PtpClock*);
 
@@ -212,7 +212,7 @@ void adjTimeOffset(TimeInternal *offset, PtpClock*);
  * @retval sendTimeStamp    set to the time when the packet left the host
  * @return TRUE if the time stamp was available
  */
-Boolean getSendTime(TimeInternal *sendTimeStamp, PtpClock*);
+ptpdBoolean getSendTime(TimeInternal *sendTimeStamp, PtpClock*);
 
 /**
  * Gets the time when the packet identified by the given attributes
@@ -239,7 +239,7 @@ Boolean getSendTime(TimeInternal *sendTimeStamp, PtpClock*);
  * @retval recvTimeStamp    set to the time when the packet entered the host, if available
  * @return TRUE if the time stamp was available
  */
-Boolean getReceiveTime(TimeInternal *recvTimeStamp,
+ptpdBoolean getReceiveTime(TimeInternal *recvTimeStamp,
                        Octet sourceUuid[PTP_UUID_LENGTH],
                        UInteger16 sequenceId, PtpClock*);
 
@@ -265,8 +265,8 @@ void initTimer(void);
 void timerUpdate(IntervalTimer*);
 void timerStop(UInteger16,IntervalTimer*);
 void timerStart(UInteger16,UInteger16,IntervalTimer*);
-Boolean timerExpired(UInteger16,IntervalTimer*);
-Boolean nanoSleep(TimeInternal*);
+ptpdBoolean timerExpired(UInteger16,IntervalTimer*);
+ptpdBoolean nanoSleep(TimeInternal*);
 /** gets the current system time */
 void timerNow(TimeInternal*);
 /*@}*/

@@ -2,16 +2,16 @@
 
 #include "ptpd.h"
 
-Boolean doInit(PtpClock*);
+ptpdBoolean doInit(PtpClock*);
 void doState(PtpClock*);
 void toState(UInteger8,PtpClock*);
 
 void handle(PtpClock*);
-void handleSync(MsgHeader*,Octet*,ssize_t,TimeInternal*,Boolean,Boolean,PtpClock*);
-void handleFollowUp(MsgHeader*,Octet*,ssize_t,Boolean,PtpClock*);
-void handleDelayReq(MsgHeader*,Octet*,ssize_t,TimeInternal*,Boolean,Boolean,PtpClock*);
-void handleDelayResp(MsgHeader*,Octet*,ssize_t,Boolean,PtpClock*);
-void handleManagement(MsgHeader*,Octet*,ssize_t,Boolean,PtpClock*);
+void handleSync(MsgHeader*,Octet*,ssize_t,TimeInternal*,ptpdBoolean,ptpdBoolean,PtpClock*);
+void handleFollowUp(MsgHeader*,Octet*,ssize_t,ptpdBoolean,PtpClock*);
+void handleDelayReq(MsgHeader*,Octet*,ssize_t,TimeInternal*,ptpdBoolean,ptpdBoolean,PtpClock*);
+void handleDelayResp(MsgHeader*,Octet*,ssize_t,ptpdBoolean,PtpClock*);
+void handleManagement(MsgHeader*,Octet*,ssize_t,ptpdBoolean,PtpClock*);
 
 void issueSync(PtpClock*);
 void issueFollowup(TimeInternal*,PtpClock*);
@@ -49,7 +49,7 @@ void protocol(PtpClock *ptpClock)
   }
 }
 
-Boolean doInit(PtpClock *ptpClock)
+ptpdBoolean doInit(PtpClock *ptpClock)
 {
   DBG("manufacturerIdentity: %s\n", MANUFACTURER_ID);
   
@@ -59,7 +59,7 @@ Boolean doInit(PtpClock *ptpClock)
   {
     ERROR("failed to initialize network\n");
     toState(PTP_FAULTY, ptpClock);
-    return FALSE;
+    return PFALSE;
   }
 
   /* initialize timing, may fail e.g. if timer depends on hardware */
@@ -67,7 +67,7 @@ Boolean doInit(PtpClock *ptpClock)
   {
     ERROR("failed to initialize timing\n");
     toState(PTP_FAULTY, ptpClock);
-    return FALSE;
+    return PFALSE;
   }
 
   switch (ptpClock->runTimeOpts.time) {
@@ -78,11 +78,11 @@ Boolean doInit(PtpClock *ptpClock)
        * send time stamp will be returned to socket when available,
        * either via IP_MULTICAST_LOOP or SIOCSHWTSTAMP + error queue
        */
-      ptpClock->delayedTiming = FALSE;
+      ptpClock->delayedTiming = PFALSE;
       break;
   default:
       /* ask for time stamp shortly after sending */
-      ptpClock->delayedTiming = TRUE;
+      ptpClock->delayedTiming = PTRUE;
       break;
   }
 
@@ -113,7 +113,7 @@ Boolean doInit(PtpClock *ptpClock)
     ptpClock->general_port_address[0], ptpClock->general_port_address[1]);
   
   toState(PTP_LISTENING, ptpClock);
-  return TRUE;
+  return PTRUE;
 }
 
 /* handle actions and events for 'port_state' */
@@ -121,7 +121,7 @@ void doState(PtpClock *ptpClock)
 {
   UInteger8 state;
   
-  ptpClock->message_activity = FALSE;
+  ptpClock->message_activity = PFALSE;
   
   switch(ptpClock->port_state)
   {
@@ -131,7 +131,7 @@ void doState(PtpClock *ptpClock)
   case PTP_MASTER:
     if(ptpClock->record_update)
     {
-      ptpClock->record_update = FALSE;
+      ptpClock->record_update = PFALSE;
       state = bmc(ptpClock->foreign, ptpClock);
       if(state != ptpClock->port_state)
         toState(state, ptpClock);
@@ -200,7 +200,7 @@ void doState(PtpClock *ptpClock)
 /* perform actions required when leaving 'port_state' and entering 'state' */
 void toState(UInteger8 state, PtpClock *ptpClock)
 {
-  ptpClock->message_activity = TRUE;
+  ptpClock->message_activity = PTRUE;
 
   /* leaving state tasks */
   switch(ptpClock->port_state)
@@ -284,7 +284,7 @@ void toState(UInteger8 state, PtpClock *ptpClock)
     ptpClock->R = getRand(&ptpClock->random_seed)%4 + 4;
     DBG("Q = %d, R = %d\n", ptpClock->Q, ptpClock->R);
     
-    ptpClock->waitingForFollow = FALSE;
+    ptpClock->waitingForFollow = PFALSE;
     ptpClock->delay_req_send_time.seconds = 0;
     ptpClock->delay_req_send_time.nanoseconds = 0;
     ptpClock->delay_req_receive_time.seconds = 0;
@@ -309,9 +309,9 @@ void handle(PtpClock *ptpClock)
 {
   int ret;
   ssize_t length;
-  Boolean isFromSelf;
-  Boolean isEvent;
-  Boolean badTime = FALSE;
+  ptpdBoolean isFromSelf;
+  ptpdBoolean isEvent;
+  ptpdBoolean badTime = PFALSE;
   TimeInternal time = { 0, 0 };
   
   if(!ptpClock->message_activity)
@@ -333,7 +333,7 @@ void handle(PtpClock *ptpClock)
   
   DBGV("handle: something\n");
 
-  isEvent = TRUE;
+  isEvent = PTRUE;
   length = netRecvEvent(ptpClock->msgIbuf,
                         ptpClock->delayedTiming ? NULL : &time,
                         ptpClock);
@@ -345,7 +345,7 @@ void handle(PtpClock *ptpClock)
   }
   else if(!length)
   {
-    isEvent = FALSE;
+    isEvent = PFALSE;
     length = netRecvGeneral(ptpClock->msgIbuf, ptpClock);
     if(length < 0)
     {
@@ -357,7 +357,7 @@ void handle(PtpClock *ptpClock)
       return;
   }
   
-  ptpClock->message_activity = TRUE;
+  ptpClock->message_activity = PTRUE;
   
   if(!msgPeek(ptpClock->msgIbuf, length))
     return;
@@ -384,7 +384,7 @@ void handle(PtpClock *ptpClock)
        */
       DBGV("*** message with no time stamp ***\n");
       getTime(&time, ptpClock);
-      badTime = TRUE;
+      badTime = PTRUE;
     }
   }
   
@@ -453,7 +453,7 @@ void handle(PtpClock *ptpClock)
   }
 }
 
-void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal *time, Boolean badTime, Boolean isFromSelf, PtpClock *ptpClock)
+void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal *time, ptpdBoolean badTime, ptpdBoolean isFromSelf, PtpClock *ptpClock)
 {
   MsgSync *sync;
   TimeInternal originTimestamp;
@@ -494,7 +494,7 @@ void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal 
       && !memcmp(header->sourceUuid, ptpClock->parent_uuid, PTP_UUID_LENGTH) )
     {
       /* addForeign() takes care of msgUnpackSync() */
-      ptpClock->record_update = TRUE;
+      ptpClock->record_update = PTRUE;
       sync = addForeign(ptpClock->msgIbuf, &ptpClock->msgTmpHeader, ptpClock);
       
       if(sync->syncInterval != ptpClock->sync_interval)
@@ -513,7 +513,7 @@ void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal 
       
       if(!getFlag(header->flags, PTP_ASSIST))
       {
-        ptpClock->waitingForFollow = FALSE;
+        ptpClock->waitingForFollow = PFALSE;
         
         toInternalTime(&originTimestamp, &sync->originTimestamp, &ptpClock->halfEpoch);
         updateOffset(&originTimestamp, &ptpClock->sync_receive_time,
@@ -522,7 +522,7 @@ void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal 
       }
       else
       {
-        ptpClock->waitingForFollow = TRUE;
+        ptpClock->waitingForFollow = PTRUE;
       }
       
       s1(header, sync, ptpClock);
@@ -552,7 +552,7 @@ void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal 
     {
       if(!isFromSelf)
       {
-        ptpClock->record_update = TRUE;
+        ptpClock->record_update = PTRUE;
         addForeign(ptpClock->msgIbuf, &ptpClock->msgTmpHeader, ptpClock);
       }
       else if(ptpClock->port_state == PTP_MASTER && ptpClock->clock_followup_capable)
@@ -565,7 +565,7 @@ void handleSync(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal 
   }
 }
 
-void handleFollowUp(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean isFromSelf, PtpClock *ptpClock)
+void handleFollowUp(MsgHeader *header, Octet *msgIbuf, ssize_t length, ptpdBoolean isFromSelf, PtpClock *ptpClock)
 {
   MsgFollowUp *follow;
   TimeInternal preciseOriginTimestamp;
@@ -602,7 +602,7 @@ void handleFollowUp(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean i
       && header->sourcePortId == ptpClock->parent_port_id
       && !memcmp(header->sourceUuid, ptpClock->parent_uuid, PTP_UUID_LENGTH) )
     {
-      ptpClock->waitingForFollow = FALSE;
+      ptpClock->waitingForFollow = PFALSE;
       
       toInternalTime(&preciseOriginTimestamp, &follow->preciseOriginTimestamp, &ptpClock->halfEpoch);
       updateOffset(&preciseOriginTimestamp, &ptpClock->sync_receive_time,
@@ -621,7 +621,7 @@ void handleFollowUp(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean i
   }
 }
 
-void handleDelayReq(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal *time, Boolean badTime, Boolean isFromSelf, PtpClock *ptpClock)
+void handleDelayReq(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInternal *time, ptpdBoolean badTime, ptpdBoolean isFromSelf, PtpClock *ptpClock)
 {
   if(length < DELAY_REQ_PACKET_LENGTH)
   {
@@ -680,7 +680,7 @@ void handleDelayReq(MsgHeader *header, Octet *msgIbuf, ssize_t length, TimeInter
   }
 }
 
-void handleDelayResp(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean isFromSelf, PtpClock *ptpClock)
+void handleDelayResp(MsgHeader *header, Octet *msgIbuf, ssize_t length, ptpdBoolean isFromSelf, PtpClock *ptpClock)
 {
   MsgDelayResp *resp;
   
@@ -712,7 +712,7 @@ void handleDelayResp(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean 
       && header->sourcePortId == ptpClock->parent_port_id
       && !memcmp(header->sourceUuid, ptpClock->parent_uuid, PTP_UUID_LENGTH) )
     {
-      ptpClock->sentDelayReq = FALSE;
+      ptpClock->sentDelayReq = PFALSE;
       
       toInternalTime(&ptpClock->delay_req_receive_time, &resp->delayReceiptTimestamp, &ptpClock->halfEpoch);
       
@@ -739,7 +739,7 @@ void handleDelayResp(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean 
   }
 }
 
-void handleManagement(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean isFromSelf, PtpClock *ptpClock)
+void handleManagement(MsgHeader *header, Octet *msgIbuf, ssize_t length, ptpdBoolean isFromSelf, PtpClock *ptpClock)
 {
   MsgManagement *manage;
   
@@ -770,7 +770,7 @@ void handleManagement(MsgHeader *header, Octet *msgIbuf, ssize_t length, Boolean
       break;
       
     default:
-      ptpClock->record_update = TRUE;
+      ptpClock->record_update = PTRUE;
       state = msgUnloadManagement(ptpClock->msgIbuf, manage, ptpClock);
       if(state != ptpClock->port_state)
         toState(state, ptpClock);
@@ -795,7 +795,7 @@ void issueSync(PtpClock *ptpClock)
   /* try to predict outgoing time stamp */
   getTime(&internalTime, ptpClock);
   fromInternalTime(&internalTime, &originTimestamp, ptpClock->halfEpoch);
-  msgPackSync(ptpClock->msgObuf, FALSE, TRUE, &originTimestamp, ptpClock);
+  msgPackSync(ptpClock->msgObuf, PFALSE, PTRUE, &originTimestamp, ptpClock);
   
   if(!netSendEvent(ptpClock->msgObuf, SYNC_PACKET_LENGTH,
                    ptpClock->delayedTiming ? &internalTime : NULL,
@@ -837,13 +837,13 @@ void issueDelayReq(PtpClock *ptpClock)
   TimeInternal internalTime;
   TimeRepresentation originTimestamp;
   
-  ptpClock->sentDelayReq = TRUE;
+  ptpClock->sentDelayReq = PTRUE;
   ptpClock->sentDelayReqSequenceId = ++ptpClock->last_sync_event_sequence_number;
 
   /* try to predict outgoing time stamp */
   getTime(&internalTime, ptpClock);
   fromInternalTime(&internalTime, &originTimestamp, ptpClock->halfEpoch);
-  msgPackDelayReq(ptpClock->msgObuf, FALSE, FALSE, &originTimestamp, ptpClock);
+  msgPackDelayReq(ptpClock->msgObuf, PFALSE, PFALSE, &originTimestamp, ptpClock);
   
   if(!netSendEvent(ptpClock->msgObuf, DELAY_REQ_PACKET_LENGTH,
                    ptpClock->delayedTiming ? &internalTime : NULL,
@@ -860,7 +860,7 @@ void issueDelayReq(PtpClock *ptpClock)
         ptpClock->delay_req_send_time = internalTime;
       } else {
         NOTIFY("WARNING: delay request message without hardware time stamp, will skip response\n");
-        ptpClock->sentDelayReq = FALSE;
+        ptpClock->sentDelayReq = PFALSE;
       }
     }
   }
@@ -900,7 +900,7 @@ void issueManagement(MsgHeader *header, MsgManagement *manage, PtpClock *ptpCloc
 MsgSync * addForeign(Octet *buf, MsgHeader *header, PtpClock *ptpClock)
 {
   int i, j;
-  Boolean found = FALSE;
+  ptpdBoolean found = PFALSE;
   
   DBGV("updateForeign\n");
   
@@ -912,7 +912,7 @@ MsgSync * addForeign(Octet *buf, MsgHeader *header, PtpClock *ptpClock)
       && !memcmp(header->sourceUuid, ptpClock->foreign[j].foreign_master_uuid, PTP_UUID_LENGTH))
     {
       ++ptpClock->foreign[j].foreign_master_syncs;
-      found = TRUE;
+      found = PTRUE;
       DBGV("updateForeign: update record %d\n", j);
       break;
     }

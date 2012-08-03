@@ -3,7 +3,7 @@
 #ifndef DATATYPES_DEP_H
 #define DATATYPES_DEP_H
 
-typedef enum {FALSE=0, TRUE} Boolean;
+typedef enum {PFALSE=0, PTRUE} ptpdBoolean;
 typedef char Octet;
 typedef signed char Integer8;
 typedef signed short Integer16;

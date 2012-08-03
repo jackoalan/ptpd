@@ -3,10 +3,10 @@
 
 #include "../ptpd.h"
 
-Boolean msgPeek(void *buf, ssize_t length)
+ptpdBoolean msgPeek(void *buf, ssize_t length)
 {
   /* not imlpemented yet */
-  return TRUE;
+  return PTRUE;
 }
 
 void msgUnpackHeader(void *buf, MsgHeader *header)
@@ -189,11 +189,11 @@ UInteger8 msgUnloadManagement(void *buf, MsgManagement *manage,
     break;
     
   case PTP_MM_CLEAR_DESIGNATED_PREFERRED_MASTER:
-    ptpClock->preferred = FALSE;
+    ptpClock->preferred = PFALSE;
     break;
       
   case PTP_MM_SET_DESIGNATED_PREFERRED_MASTER:
-    ptpClock->preferred = TRUE;
+    ptpClock->preferred = PTRUE;
     break;
     
   case PTP_MM_DISABLE_BURST:
@@ -372,7 +372,7 @@ void msgPackHeader(void *buf, PtpClock *ptpClock)
     setFlag((buf + 34), PTP_BOUNDARY_CLOCK);
 }
 
-void msgPackSync(void *buf, Boolean burst, Boolean ptpAssist,
+void msgPackSync(void *buf, ptpdBoolean burst, ptpdBoolean ptpAssist,
   TimeRepresentation *originTimestamp, PtpClock *ptpClock)
 {
   *(UInteger8*)(buf +20) = 1;  /* messageType */
@@ -418,7 +418,7 @@ void msgPackSync(void *buf, Boolean burst, Boolean ptpAssist,
   *(Integer32*)(buf + 120) = shift8(ptpClock->utc_reasonable, 3);
 }
 
-void msgPackDelayReq(void *buf, Boolean burst, Boolean ptpAssist,
+void msgPackDelayReq(void *buf, ptpdBoolean burst, ptpdBoolean ptpAssist,
   TimeRepresentation *originTimestamp, PtpClock *ptpClock)
 {
   *(UInteger8*)(buf + 20) = 1;  /* messageType */

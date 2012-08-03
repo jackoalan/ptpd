@@ -13,8 +13,8 @@
 /* arith.c */
 UInteger32 crc_algorithm(Octet*,Integer16);
 UInteger32 sum(Octet*,Integer16);
-void fromInternalTime(TimeInternal*,TimeRepresentation*,Boolean);
-void toInternalTime(TimeInternal*,TimeRepresentation*,Boolean*);
+void fromInternalTime(TimeInternal*,TimeRepresentation*,ptpdBoolean);
+void toInternalTime(TimeInternal*,TimeRepresentation*,ptpdBoolean*);
 void normalizeTime(TimeInternal*);
 void addTime(TimeInternal*,TimeInternal*,TimeInternal*);
 void subTime(TimeInternal*,TimeInternal*,TimeInternal*);

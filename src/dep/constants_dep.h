@@ -7,6 +7,8 @@
 
 #include <limits.h>
 
+#define __FreeBSD__
+
 #if !defined(linux) && !defined(__NetBSD__) && !defined(__FreeBSD__)
 #error Not ported to this architecture, please update.
 #endif
