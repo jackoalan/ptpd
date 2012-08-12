@@ -65,7 +65,7 @@ UInteger32 findIface(Octet *ifaceName, UInteger8 *communicationTechnology,
 {
 #if defined(linux)
 
-  /* depends on linux specific ioctls (see 'netdevice' man page) */
+/* depends on linux specific ioctls (see 'netdevice' man page) */
   int i, flags;
   struct ifconf data;
   struct ifreq device[IFCONF_LENGTH];
@@ -143,7 +143,7 @@ UInteger32 findIface(Octet *ifaceName, UInteger8 *communicationTechnology,
   ptpClock->netPath.eventSockIFR = device[i];
   return ((struct sockaddr_in *)&device[i].ifr_addr)->sin_addr.s_addr;
 
-#elif defined(BSD_INTERFACE_FUNCTIONS)
+#else
 
   struct ifaddrs *if_list, *ifv4, *ifh;
 
@@ -540,7 +540,7 @@ ssize_t netRecvEvent(Octet *buf, TimeInternal *time, PtpClock *ptpClock)
                    cmsg->cmsg_len, sizeof(*tv));
              return 0;
           }
-          time->seconds = tv->tv_sec;
+          time->seconds = (Integer32)tv->tv_sec;
           time->nanoseconds = tv->tv_usec*1000;
           have_time = PTRUE;
           break;

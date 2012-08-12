@@ -99,8 +99,8 @@ ptpdBoolean nanoSleep(TimeInternal *t)
 
   if(nanosleep(&ts, &tr) < 0)
   {
-    t->seconds = tr.tv_sec;
-    t->nanoseconds = tr.tv_nsec;
+    t->seconds = (Integer32)tr.tv_sec;
+    t->nanoseconds = (Integer32)tr.tv_nsec;
     return PFALSE;
   }
 
@@ -112,6 +112,6 @@ void timerNow(TimeInternal *time)
   struct timeval tv;
 
   gettimeofday(&tv, 0);
-  time->seconds = tv.tv_sec;
-  time->nanoseconds = tv.tv_usec*1000;
+  time->seconds = (Integer32)tv.tv_sec;
+  time->nanoseconds = (Integer32)(tv.tv_usec*1000);
 }

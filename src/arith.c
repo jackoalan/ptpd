@@ -43,15 +43,15 @@ UInteger32 sum(Octet *buf, Integer16 length)
 
 void fromInternalTime(TimeInternal *internal, TimeRepresentation *external, ptpdBoolean halfEpoch)
 {
-  external->seconds = labs(internal->seconds) + halfEpoch * INT_MAX;
+  external->seconds = (Integer32)(labs(internal->seconds) + halfEpoch * INT_MAX);
   
   if(internal->seconds < 0 || internal->nanoseconds < 0)
   {
-    external->nanoseconds = labs(internal->nanoseconds) | ~INT_MAX;
+    external->nanoseconds = (Integer32)(labs(internal->nanoseconds) | ~INT_MAX);
   }
   else
   {
-    external->nanoseconds = labs(internal->nanoseconds);
+    external->nanoseconds = (Integer32)labs(internal->nanoseconds);
   }
   
   DBGV("fromInternalTime: %10ds %11dns -> %10us %11dns\n",

@@ -115,6 +115,9 @@ void displayHeader(MsgHeader *header)
     header->sourcePortId);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat"
+
 void displayManagement(MsgHeader *header, MsgManagement *manage)
 {
   Integer16 i;
@@ -287,3 +290,5 @@ void displayManagement(MsgHeader *header, MsgManagement *manage)
   
   return;
 }
+
+#pragma clang diagnostic pop
